@@ -1,3 +1,4 @@
+% Base de faits
 meme( anglais, rouge ).
 meme( chien, espagnol ).
 meme( norvegien, 1 ).
@@ -16,9 +17,12 @@ voisin( verte, ivoire ).
 
 droite( verte, ivoire ).
 
+% On doit définir gauche au moins une fois (par un fait ou une règle)
+% pour qu'il soit trouvé par findall plus loins dans le code.
 gauche(X, Y) :-
   droite(Y, X).
 
+% Enumeration des valeurs possibles
 position(1).
 position(2).
 position(3).
@@ -62,6 +66,10 @@ maison(Couleur, Nationalite, Animal, Breuvage, Met) :-
   breuvage(Breuvage),
   met(Met).
 
+% Permet de convertir une valeur vers une variable où le "type" est assuré.
+% Ceci nous permet de savoir le "type" d'une variable donnée.
+% Exemple: valeurVersItems(kiwi, C, N, A, B, M) retournera kiwi dans M
+%          car c'est un met, tout en gardant les autres variables libres.
 valeurVersItems(X, X, _, _, _, _) :-
   couleur(X).
 
@@ -77,6 +85,7 @@ valeurVersItems(X, _, _, _, X, _) :-
 valeurVersItems(X, _, _, _, _, X) :-
   met(X).
 
+% Même fonctionnement que valeurVersItems, mais appliqué à un tuple.
 tupleVersItems((X, Y), X, Y, _, _, _) :-
   couleur(X), nationalite(Y).
 
@@ -137,158 +146,149 @@ tupleVersItems((Y, X), _, _, X, _, Y) :-
 tupleVersItems((Y, X), _, _, _, X, Y) :-
   breuvage(X), met(Y).
 
-verifierFaitsMaisons(Houses) :-
-  length(Houses, 5),
-  maisonsToutesDiff(Houses),
-  verifierFaitsMemeMaison(Houses),
-  verifierFaitsVoisin(Houses),
-  verifierFaitsGauche(Houses),
-  verifierFaitsDroite(Houses),
-  verifierCouleurs(Houses),
-  verifierNationalites(Houses),
-  verifierAnimals(Houses),
-  verifierBreuvages(Houses),
-  verifierMets(Houses).
+% Construction de la liste des 5 maisons basé sur les faits. À noter que la position
+% d'une maison est représenté par son index dans la liste, où l'index commence à 1.
+obtenirMaisonsSelonFaits(Maisons) :-
+  length(Maisons, 5),
+  verifierFaitsMemeMaison(Maisons),
+  verifierFaitsVoisin(Maisons),
+  verifierFaitsGauche(Maisons),
+  verifierFaitsDroite(Maisons),
+  verifierCouleurs(Maisons),
+  verifierNationalites(Maisons),
+  verifierAnimals(Maisons),
+  verifierBreuvages(Maisons),
+  verifierMets(Maisons).
 
-verifierFaitsVoisin(H) :-
-  findall((X, Y), voisin(X, Y), VS),
-  maplist(verifierFaitVoisin(H), VS).
-
-verifierFaitsMemeMaison(H) :-
+% Vérifications de tous les faits de type meme, voisin, gauche et droite ainsi
+% qu'une validation pour s'assurer que toutes les valeurs possibles sont utilisées.
+verifierFaitsMemeMaison(Maisons) :-
   findall((X, Y), meme(X, Y), XS),
-  maplist(verifierFaitMemeMaison(H), XS).
+  maplist(verifierFaitMemeMaison(Maisons), XS).
 
-verifierFaitsGauche(H) :-
+verifierFaitsVoisin(Maisons) :-
+  findall((X, Y), voisin(X, Y), VS),
+  maplist(verifierFaitVoisin(Maisons), VS).
+
+verifierFaitsGauche(Maisons) :-
   findall((X, Y), gauche(X, Y), XS),
-  maplist(verifierFaitGauche(H), XS).
+  maplist(verifierFaitGauche(Maisons), XS).
 
-verifierFaitsDroite(H) :-
+verifierFaitsDroite(Maisons) :-
   findall((X, Y), droite(X, Y), XS),
-  maplist(verifierFaitDroite(H), XS).
+  maplist(verifierFaitDroite(Maisons), XS).
 
-verifierCouleurs(H) :-
-    findall((X), couleur(X), XS),
-    maplist(verifierCouleur(H), XS).
+verifierCouleurs(Maisons) :-
+  findall((X), couleur(X), XS),
+  maplist(verifierCouleur(Maisons), XS).
 
-verifierNationalites(H) :-
+verifierNationalites(Maisons) :-
   findall((X), nationalite(X), XS),
-  maplist(verifierNationalite(H), XS).
+  maplist(verifierNationalite(Maisons), XS).
 
-verifierAnimals(H) :-
+verifierAnimals(Maisons) :-
   findall((X), animal(X), XS),
-  maplist(verifierAnimal(H), XS).
+  maplist(verifierAnimal(Maisons), XS).
 
-verifierBreuvages(H) :-
+verifierBreuvages(Maisons) :-
   findall((X), breuvage(X), XS),
-  maplist(verifierBreuvage(H), XS).
+  maplist(verifierBreuvage(Maisons), XS).
 
-verifierMets(H) :-
+verifierMets(Maisons) :-
   findall((X), met(X), XS),
-  maplist(verifierMet(H), XS).
+  maplist(verifierMet(Maisons), XS).
 
-verifierFaitVoisin(H, (X, Y)) :-
+% Applique chacun des faits en respect à la liste de maison.
+
+verifierFaitVoisin(Maisons, (X, Y)) :-
   position(X),
   valeurVersItem(Y, C, N, A, B, M),
   PY is X+1,
-  nth1(PY, H, maison(C, N, A, B, M)).
+  nth1(PY, Maisons, maison(C, N, A, B, M)).
 
-verifierFaitVoisin(H, (Y, X)) :-
+verifierFaitVoisin(Maisons, (Y, X)) :-
   position(X),
   valeurVersItem(Y, C, N, A, B, M),
   PY is X+1,
-  nth1(PY, H, maison(C, N, A, B, M)).
+  nth1(PY, Maisons, maison(C, N, A, B, M)).
 
-verifierFaitVoisin(H, (X, Y)) :-
+verifierFaitVoisin(Maisons, (X, Y)) :-
   valeurVersItems(X, CX, NX, AX, BX, MX),
   valeurVersItems(Y, CY, NY, AY, BY, MY),
-  append(_, [maison(CX, NX, AX, BX, MX), maison(CY, NY, AY, BY, MY) | _], H).
+  append(_, [maison(CX, NX, AX, BX, MX), maison(CY, NY, AY, BY, MY) | _], Maisons).
 
-verifierFaitVoisin(H, (Y, X)) :-
+verifierFaitVoisin(Maisons, (Y, X)) :-
   valeurVersItems(X, CX, NX, AX, BX, MX),
   valeurVersItems(Y, CY, NY, AY, BY, MY),
-  append(_, [maison(CX, NX, AX, BX, MX), maison(CY, NY, AY, BY, MY) | _], H).
+  append(_, [maison(CX, NX, AX, BX, MX), maison(CY, NY, AY, BY, MY) | _], Maisons).
 
-verifierFaitMemeMaison(H, (X, Y)) :-
+verifierFaitMemeMaison(Maisons, (X, Y)) :-
   position(X),
   valeurVersItems(Y, C, N, A, B, M),
-  nth1(X, H, maison(C, N, A, B, M)).
+  nth1(X, Maisons, maison(C, N, A, B, M)).
 
-verifierFaitMemeMaison(H, (Y, X)) :-
+verifierFaitMemeMaison(Maisons, (Y, X)) :-
   position(X),
   valeurVersItems(Y, C, N, A, B, M),
-  nth1(X, H, maison(C, N, A, B, M)).
+  nth1(X, Maisons, maison(C, N, A, B, M)).
 
-verifierFaitMemeMaison(H, T) :-
+verifierFaitMemeMaison(Maisons, T) :-
   tupleVersItems(T, C, N, A, B, M),
-  member(maison(C, N, A, B, M), H).
+  member(maison(C, N, A, B, M), Maisons).
 
-verifierFaitGauche(H, (X, Y)) :-
+verifierFaitGauche(Maisons, (X, Y)) :-
   position(X),
   valeurVersItems(Y, C, N, A, B, M),
-  nth1(PY, H, maison(C, N, A, B, M)),
+  nth1(PY, Maisons, maison(C, N, A, B, M)),
   X < PY.
 
-verifierFaitGauche(H, (Y, X)) :-
+verifierFaitGauche(Maisons, (Y, X)) :-
   position(X),
   valeurVersItems(Y, C, N, A, B, M),
-  nth1(PY, H, maison(C, N, A, B, M)),
+  nth1(PY, Maisons, maison(C, N, A, B, M)),
   X < PY.
 
-verifierFaitGauche(H, (X, Y)) :-
+verifierFaitGauche(Maisons, (X, Y)) :-
   valeurVersItems(X, C1, N1, A1, B1, M1),
   valeurVersItems(Y, C2, N2, A2, B2, M2),
-  nth1(PX, H, maison(C1, N1, A1, B1, M1)),
-  nth1(PY, H, maison(C2, N2, A2, B2, M2)),
+  nth1(PX, Maisons, maison(C1, N1, A1, B1, M1)),
+  nth1(PY, Maisons, maison(C2, N2, A2, B2, M2)),
   PX < PY.
 
-verifierFaitDroite(H, (X, Y)) :-
+verifierFaitDroite(Maisons, (X, Y)) :-
   position(X),
   valeurVersItems(Y, C, N, A, B, M),
-  nth1(PY, H, maison(C, N, A, B, M)),
+  nth1(PY, Maisons, maison(C, N, A, B, M)),
   X > PY.
 
-verifierFaitDroite(H, (Y, X)) :-
+verifierFaitDroite(Maisons, (Y, X)) :-
   position(X),
   valeurVersItems(Y, C, N, A, B, M),
-  nth1(PY, H, maison(C, N, A, B, M)),
+  nth1(PY, Maisons, maison(C, N, A, B, M)),
   X > PY.
 
-verifierFaitDroite(H, (X, Y)) :-
+verifierFaitDroite(Maisons, (X, Y)) :-
   valeurVersItems(X, C1, N1, A1, B1, M1),
   valeurVersItems(Y, C2, N2, A2, B2, M2),
-  nth1(PX, H, maison(C1, N1, A1, B1, M1)),
-  nth1(PY, H, maison(C2, N2, A2, B2, M2)),
+  nth1(PX, Maisons, maison(C1, N1, A1, B1, M1)),
+  nth1(PY, Maisons, maison(C2, N2, A2, B2, M2)),
   PX > PY.
 
-verifierCouleur(H, X) :-
-  member(maison(X, _, _, _, _), H).
+verifierCouleur(Maisons, X) :-
+  member(maison(X, _, _, _, _), Maisons).
 
-verifierNationalite(H, X) :-
-  member(maison(_, X, _, _, _), H).
+verifierNationalite(Maisons, X) :-
+  member(maison(_, X, _, _, _), Maisons).
 
-verifierAnimal(H, X) :-
-  member(maison(_, _, X, _, _), H).
+verifierAnimal(Maisons, X) :-
+  member(maison(_, _, X, _, _), Maisons).
 
-verifierBreuvage(H, X) :-
-  member(maison(_, _, _, X, _), H).
+verifierBreuvage(Maisons, X) :-
+  member(maison(_, _, _, X, _), Maisons).
 
-verifierMet(H, X) :-
-  member(maison(_, _, _, _, X), H).
-
-maisonsToutesDiff([maison(C1, N1, A1, B1, M1), maison(C2, N2, A2, B2, M2), maison(C3, N3, A3, B3, M3), maison(C4, N4, A4, B4, M4), maison(C5, N5, A5, B5, M5)]) :-
-  tousDiff([C1, C2, C3, C4, C5]),
-  tousDiff([N1, N2, N3, N4, N5]),
-  tousDiff([A1, A2, A3, A4, A5]),
-  tousDiff([B1, B2, B3, B4, B5]),
-  tousDiff([M1, M2, M3, M4, M5]).
-
-tousDiff([]).
-tousDiff(XS) :-
-   list_to_set(XS, SS),
-   length(XS, L1),
-   length(SS, L2),
-   L1 = L2.
+verifierMet(Maisons, X) :-
+  member(maison(_, _, _, _, X), Maisons).
 
 question( Position, Couleur, Nationalite, Animal, Breuvage, Mets ) :-
-  verifierFaitsMaisons(Houses),
-  nth1(Position, Houses, maison(Couleur, Nationalite, Animal, Breuvage, Mets)).
+  obtenirMaisonsSelonFaits(Maisons),
+  nth1(Position, Maisons, maison(Couleur, Nationalite, Animal, Breuvage, Mets)).
