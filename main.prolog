@@ -1,26 +1,7 @@
-% Base de faits
-meme( anglais, rouge ).
-meme( chien, espagnol ).
-meme( norvegien, 1 ).
-meme( kiwi, jaune ).
-meme( wasabi, serpent ).
-meme( litchi, jus_orange ).
-meme( ukrainien, the ).
-meme( canadien, poire ).
-meme( cafe, verte ).
-meme( lait, 3 ).
-
-voisin( celeri, renard ).
-voisin( norvegien, bleu ).
-voisin( kiwi, cheval ).
-voisin( verte, ivoire ).
-
-droite( verte, ivoire ).
-
-% On doit définir gauche au moins une fois (par un fait ou une règle)
-% pour qu'il soit trouvé par findall plus loins dans le code.
-gauche(X, Y) :-
-  droite(Y, X).
+:- dynamic(meme/2).
+:- dynamic(voisin/2).
+:- dynamic(droite/2).
+:- dynamic(gauche/2).
 
 % Enumeration des valeurs possibles
 position(1).
